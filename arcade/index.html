@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ARCADE HUB</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0b0b12;
+    --panel: #14141f;
+    --cyan: #00f0ff;
+    --red: #ff3333;
+    --yellow: #fff000;
+    --text: #e8e8f0;
+    --dim: #6b6b80;
+  }
+  * { box-sizing: border-box; }
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Space Mono', monospace;
+    min-height:100vh;
+    position:relative;
+    overflow-x:hidden;
+  }
+  /* CRT 스캔라인 */
+  body::before{
+    content:"";
+    position:fixed; inset:0;
+    background:repeating-linear-gradient(
+      to bottom, rgba(255,255,255,0.025) 0px, rgba(255,255,255,0.025) 1px,
+      transparent 1px, transparent 3px
+    );
+    pointer-events:none;
+    z-index:10;
+  }
+
+  header{
+    padding:56px 24px 40px;
+    text-align:center;
+    border-bottom:2px solid #24243a;
+  }
+  h1{
+    font-family:'Press Start 2P', monospace;
+    font-size:clamp(22px, 5vw, 40px);
+    letter-spacing:2px;
+    margin:0 0 14px;
+    color:var(--cyan);
+    text-shadow: 0 0 12px rgba(0,240,255,0.5), 3px 3px 0 var(--red);
+  }
+  header p{
+    color:var(--dim);
+    font-size:13px;
+    letter-spacing:1px;
+    margin:0;
+  }
+
+  main{
+    max-width:960px;
+    margin:0 auto;
+    padding:48px 20px 80px;
+  }
+
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(260px, 1fr));
+    gap:28px;
+  }
+
+  .card{
+    position:relative;
+    display:block;
+    text-decoration:none;
+    color:inherit;
+    background:var(--panel);
+    border:2px solid #26263a;
+    border-radius:6px;
+    overflow:hidden;
+    transition:transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+  }
+  .card:hover{
+    transform:translateY(-4px);
+    border-color:var(--cyan);
+    box-shadow:0 8px 26px rgba(0,240,255,0.18);
+  }
+  .card:focus-visible{
+    outline:3px solid var(--yellow);
+    outline-offset:2px;
+  }
+
+  .banner{
+    height:150px;
+    position:relative;
+    display:flex; align-items:center; justify-content:center;
+    background:
+      radial-gradient(circle at 30% 20%, rgba(0,240,255,0.15), transparent 60%),
+      linear-gradient(160deg, #1a1a2c, #0e0e18);
+    overflow:hidden;
+  }
+  /* CSS로 그린 비행기 실루엣 */
+  .plane{
+    width:0; height:0;
+    border-left:22px solid transparent;
+    border-right:22px solid transparent;
+    border-bottom:38px solid var(--cyan);
+    filter:drop-shadow(0 0 10px rgba(0,240,255,0.6));
+    animation:float 2.6s ease-in-out infinite;
+  }
+  @keyframes float{
+    0%,100%{ transform:translateY(0); }
+    50%{ transform:translateY(-6px); }
+  }
+  .banner .tracer{
+    position:absolute;
+    width:2px; height:70%;
+    background:linear-gradient(to top, transparent, var(--yellow));
+    opacity:.5;
+  }
+  .banner .tracer:nth-child(1){ left:20%; }
+  .banner .tracer:nth-child(2){ left:75%; animation-delay:.3s; }
+
+  .meta{
+    padding:16px 18px 20px;
+    border-top:2px solid #26263a;
+  }
+  .meta .tag{
+    font-family:'Press Start 2P', monospace;
+    font-size:9px;
+    color:var(--red);
+    letter-spacing:1px;
+  }
+  .meta h2{
+    font-size:16px;
+    margin:8px 0 6px;
+    color:var(--text);
+  }
+  .meta p{
+    font-size:12px;
+    color:var(--dim);
+    margin:0;
+    line-height:1.5;
+  }
+
+  /* 준비중 카드 */
+  .card.soon{
+    opacity:.5;
+    pointer-events:none;
+  }
+  .card.soon .banner{
+    background:repeating-linear-gradient(45deg, #17172a, #17172a 10px, #14141f 10px, #14141f 20px);
+  }
+  .card.soon .meta .tag{ color:var(--dim); }
+
+  footer{
+    text-align:center;
+    padding:24px;
+    color:var(--dim);
+    font-size:11px;
+    border-top:2px solid #24243a;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>ARCADE HUB</h1>
+  <p>SELECT YOUR GAME</p>
+</header>
+
+<main>
+  <div class="grid">
+
+    <a class="card" href="games/1945/index.html">
+      <div class="banner">
+        <div class="tracer"></div>
+        <div class="plane"></div>
+        <div class="tracer"></div>
+      </div>
+      <div class="meta">
+        <span class="tag">SHOOTER</span>
+        <h2>1945</h2>
+        <p>클릭/터치/방향키로 조종하는 레트로 슈팅 게임</p>
+      </div>
+    </a>
+
+    <div class="card soon">
+      <div class="banner"></div>
+      <div class="meta">
+        <span class="tag">COMING SOON</span>
+        <h2>???</h2>
+        <p>다음 게임을 준비 중입니다</p>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<footer>© 2026 ARCADE HUB — MADE WITH HTML5 CANVAS</footer>
+
+</body>
+</html>

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>1945 Retro Game</title>
+    <style>
+        body { 
+            margin: 0; 
+            background: #111; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            overflow: hidden; 
+            touch-action: none;
+        }
+        canvas { 
+            border: 4px solid #fff; 
+            background: #000; 
+            max-width: 100%;
+            max-height: 100vh;
+            cursor: none;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="g" width="400" height="600"></canvas>
+<script>
+const canvas = document.getElementById("g");
+const ctx = canvas.getContext("2d");
+
+let score = 0, gameOver = false, enemyTimer = 0, shootTimer = 0;
+const player = { x: 185, y: 530, w: 30, h: 30 };
+const bullets = [], enemies = [];
+
+// 캔버스 좌표 변환 (클라이언트 좌표 -> 캔버스 내부 좌표)
+function toCanvasCoords(clientX, clientY) {
+    const rect = canvas.getBoundingClientRect();
+    return {
+        x: ((clientX - rect.left) / rect.width) * canvas.width,
+        y: ((clientY - rect.top) / rect.height) * canvas.height
+    };
+}
+
+function movePlayerTo(x, y, offsetY) {
+    player.x = x - player.w / 2;
+    player.y = y - player.h / 2 - (offsetY || 0);
+    if (player.x < 0) player.x = 0;
+    if (player.x > canvas.width - player.w) player.x = canvas.width - player.w;
+    if (player.y < 0) player.y = 0;
+    if (player.y > canvas.height - player.h) player.y = canvas.height - player.h;
+}
+
+// --- 터치 (모바일) ---
+function handleTouch(e) {
+    if (gameOver) return;
+    e.preventDefault();
+    const touch = e.touches[0];
+    const pos = toCanvasCoords(touch.clientX, touch.clientY);
+    movePlayerTo(pos.x, pos.y, 30); // 손가락에 가리지 않게 위로 조정
+}
+
+canvas.addEventListener("touchstart", (e) => {
+    if (gameOver) { reset(); } else { handleTouch(e); }
+}, {passive: false});
+canvas.addEventListener("touchmove", handleTouch, {passive: false});
+
+// --- 마우스 (웹/데스크톱) ---
+let mouseActive = false;
+
+canvas.addEventListener("mousemove", (e) => {
+    if (gameOver) return;
+    mouseActive = true;
+    const pos = toCanvasCoords(e.clientX, e.clientY);
+    movePlayerTo(pos.x, pos.y, 0);
+});
+
+canvas.addEventListener("mousedown", (e) => {
+    if (gameOver) {
+        reset();
+    } else {
+        mouseActive = true;
+        const pos = toCanvasCoords(e.clientX, e.clientY);
+        movePlayerTo(pos.x, pos.y, 0);
+    }
+});
+
+canvas.addEventListener("mouseleave", () => { mouseActive = false; });
+
+// --- 키보드 (웹/데스크톱) ---
+const keys = {};
+window.addEventListener("keydown", (e) => {
+    keys[e.key] = true;
+    if (gameOver && (e.key === " " || e.key === "Enter")) reset();
+});
+window.addEventListener("keyup", (e) => { keys[e.key] = false; });
+
+function handleKeyboard() {
+    const speed = 6;
+    if (keys["ArrowLeft"] || keys["a"] || keys["A"]) player.x -= speed;
+    if (keys["ArrowRight"] || keys["d"] || keys["D"]) player.x += speed;
+    if (keys["ArrowUp"] || keys["w"] || keys["W"]) player.y -= speed;
+    if (keys["ArrowDown"] || keys["s"] || keys["S"]) player.y += speed;
+
+    if (player.x < 0) player.x = 0;
+    if (player.x > canvas.width - player.w) player.x = canvas.width - player.w;
+    if (player.y < 0) player.y = 0;
+    if (player.y > canvas.height - player.h) player.y = canvas.height - player.h;
+}
+
+function spawn() {
+    const size = Math.random() * 20 + 20;
+    enemies.push({ x: Math.random() * (canvas.width - size), y: -size, w: size, h: size, speed: Math.random() * 3 + 2 });
+}
+
+function hits(a, b) {
+    return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+}
+
+function reset() {
+    score = 0; gameOver = false; player.x = 185; player.y = 530;
+    bullets.length = 0; enemies.length = 0; enemyTimer = 0; shootTimer = 0;
+    loop();
+}
+
+function loop() {
+    if (gameOver) return;
+
+    handleKeyboard();
+
+    // 자동 발사
+    shootTimer++;
+    if (shootTimer % 12 === 0) {
+        bullets.push({ x: player.x + 12, y: player.y, w: 6, h: 15, speed: 9 });
+    }
+
+    // 총알 이동
+    for (let i = bullets.length - 1; i >= 0; i--) {
+        bullets[i].y -= bullets[i].speed;
+        if (bullets[i].y < 0) bullets.splice(i, 1);
+    }
+
+    // 적 스폰
+    if (++enemyTimer % 35 === 0) spawn();
+
+    // 적 이동 및 충돌 체크
+    for (let i = enemies.length - 1; i >= 0; i--) {
+        let e = enemies[i]; e.y += e.speed;
+        if (e.y > canvas.height) { enemies.splice(i, 1); continue; }
+        if (hits(player, e)) gameOver = true;
+        for (let j = bullets.length - 1; j >= 0; j--) {
+            if (hits(bullets[j], e)) { enemies.splice(i, 1); bullets.splice(j, 1); score += 100; break; }
+        }
+    }
+
+    // 그리기
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = "#00f0ff";
+    ctx.beginPath();
+    ctx.moveTo(player.x + 15, player.y);
+    ctx.lineTo(player.x, player.y + 30);
+    ctx.lineTo(player.x + 30, player.y + 30);
+    ctx.fill();
+
+    ctx.fillStyle = "#fff000"; bullets.forEach(b => ctx.fillRect(b.x, b.y, b.w, b.h));
+    ctx.fillStyle = "#ff3333"; enemies.forEach(e => ctx.fillRect(e.x, e.y, e.w, e.h));
+
+    ctx.fillStyle = "#fff"; ctx.font = "20px sans-serif"; ctx.fillText(`SCORE: ${score}`, 10, 30);
+
+    if (gameOver) {
+        ctx.fillStyle = "rgba(0,0,0,0.8)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#ff3333"; ctx.font = "40px sans-serif"; ctx.textAlign = "center";
+        ctx.fillText("GAME OVER", 200, 280);
+        ctx.fillStyle = "#fff"; ctx.font = "18px sans-serif";
+        ctx.fillText("클릭 / 터치 / 스페이스바로 재시작", 200, 340);
+        ctx.textAlign = "start";
+    } else {
+        requestAnimationFrame(loop);
+    }
+}
+loop();
+</script>
+</body>
+</html>

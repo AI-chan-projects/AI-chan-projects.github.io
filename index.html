@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Projects</title>
+<style>
+  :root{
+    --bg:#0e0f13;
+    --line:#2a2b33;
+    --ink:#e9e9ee;
+    --dim:#7a7b86;
+    --accent:#7dd8c0;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html,body{
+    height:100%;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:ui-monospace, "SF Mono", "JetBrains Mono", monospace;
+    overflow:hidden;
+  }
+
+  .reel{
+    height:100vh;
+    overflow-y:scroll;
+    scroll-snap-type:y mandatory;
+    scrollbar-width:none;
+  }
+  .reel::-webkit-scrollbar{ display:none; }
+
+  .slot{
+    height:100vh;
+    scroll-snap-align:center;
+    scroll-snap-stop:always;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:0 24px;
+    border-bottom:1px solid var(--line);
+  }
+
+  .slot .n{
+    color:var(--dim);
+    font-size:12px;
+    letter-spacing:2px;
+    margin-bottom:14px;
+  }
+  .slot a{
+    color:var(--ink);
+    text-decoration:none;
+    font-size:clamp(22px, 7vw, 34px);
+    font-weight:700;
+    letter-spacing:.5px;
+  }
+  .slot a:hover, .slot a:focus-visible{ color:var(--accent); }
+  .slot .desc{
+    margin-top:10px;
+    color:var(--dim);
+    font-size:13px;
+  }
+  .slot.empty a{ color:var(--dim); pointer-events:none; }
+
+  .hint{
+    position:fixed;
+    bottom:14px; left:0; right:0;
+    text-align:center;
+    font-size:11px;
+    color:var(--dim);
+    letter-spacing:1px;
+    pointer-events:none;
+  }
+</style>
+</head>
+<body>
+
+<div class="reel" id="reel">
+
+  <div class="slot" data-i="1">
+    <div class="n">01</div>
+    <a href="arcade/index.html">Arcade Hub</a>
+    <div class="desc">HTML5 미니게임 모음</div>
+  </div>
+
+  <div class="slot empty" data-i="2">
+    <div class="n">02</div>
+    <a href="#">npc-agent</a>
+    <div class="desc">링크 연결 예정</div>
+  </div>
+
+  <div class="slot empty" data-i="3">
+    <div class="n">03</div>
+    <a href="#">경제 지표 봇</a>
+    <div class="desc">링크 연결 예정</div>
+  </div>
+
+  <div class="slot empty" data-i="4">
+    <div class="n">04</div>
+    <a href="#">hkhk</a>
+    <div class="desc">링크 연결 예정</div>
+  </div>
+
+</div>
+
+<div class="hint">SCROLL ↕</div>
+
+<script>
+  const reel = document.getElementById('reel');
+  let locked = false;
+
+  function atBottom(){ return reel.scrollTop + reel.clientHeight >= reel.scrollHeight - 2; }
+  function atTop(){ return reel.scrollTop <= 2; }
+  function lockThen(fn){
+    locked = true;
+    fn();
+    setTimeout(() => { locked = false; }, 500);
+  }
+
+  reel.addEventListener('wheel', (e) => {
+    if (locked) return;
+    if (e.deltaY > 0 && atBottom()) {
+      e.preventDefault();
+      lockThen(() => reel.scrollTo({ top: 0, behavior: 'smooth' }));
+    } else if (e.deltaY < 0 && atTop()) {
+      e.preventDefault();
+      lockThen(() => reel.scrollTo({ top: reel.scrollHeight, behavior: 'smooth' }));
+    }
+  }, { passive: false });
+
+  let touchStartY = 0;
+  reel.addEventListener('touchstart', (e) => { touchStartY = e.touches[0].clientY; });
+  reel.addEventListener('touchmove', (e) => {
+    if (locked) return;
+    const diff = touchStartY - e.touches[0].clientY;
+    if (diff > 0 && atBottom()) {
+      e.preventDefault();
+      lockThen(() => reel.scrollTo({ top: 0, behavior: 'smooth' }));
+    } else if (diff < 0 && atTop()) {
+      e.preventDefault();
+      lockThen(() => reel.scrollTo({ top: reel.scrollHeight, behavior: 'smooth' }));
+    }
+  }, { passive: false });
+</script>
+
+</body>
+</html>
