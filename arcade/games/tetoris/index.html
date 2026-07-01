@@ -2,30 +2,32 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>TETORIS</title>
 <style>
   * { box-sizing: border-box; }
+  /* 헤더를 상단에 고정하고 보드를 나머지 전체 공간에 배치 */
   body {
     margin: 0; background: #0e0f13; color: #e9e9ee;
     font-family: ui-monospace, monospace;
     display: flex; flex-direction: column; align-items: center;
-    /* 모바일 브라우저 툴바 대응을 위해 vh 대신 가시 영역 활용 */
     height: 100vh; height: 100dvh;
     touch-action: none; overflow: hidden;
     -webkit-user-select: none; user-select: none;
     overscroll-behavior: none;
+    padding-top: env(safe-area-inset-top);
   }
   header {
+    flex: 0 0 auto; /* 헤더 크기 고정 */
     display: flex; justify-content: space-between; align-items: center;
-    width: 100%; max-width: 360px; padding: 12px 16px 4px;
+    width: 100%; max-width: 360px; padding: 12px 16px;
   }
-  header .score { font-size: 14px; }
-  header button {
-    background: none; border: 1px solid #444; color: #e9e9ee;
-    border-radius: 6px; padding: 6px 10px; font-family: inherit; font-size: 12px;
+  #board { 
+    flex: 1; /* 남은 공간을 보드가 모두 차지 */
+    border: 2px solid #333; background: #000; 
+    touch-action: none; display: block;
+    margin-bottom: 20px; /* 하단 툴바 간섭 방지 여백 */
   }
-  #board { border: 2px solid #333; background: #000; touch-action: none; display: block; }
   #overlay {
     position: fixed; inset: 0; background: rgba(0,0,0,.9);
     display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -35,8 +37,7 @@
   #overlay.hide { display: none; }
   #overlay button {
     background: #00f0ff; color: #000; border: none; border-radius: 6px;
-    padding: 12px 32px; font-weight: bold; font-family: inherit; font-size: 14px;
-    cursor: pointer;
+    padding: 12px 32px; font-weight: bold; font-family: inherit; cursor: pointer;
   }
 </style>
 </head>
@@ -69,15 +70,13 @@ const ctx = canvas.getContext('2d');
 
 function resize() {
   const header = document.querySelector('header');
-  // 브라우저 툴바를 제외한 실제 가시 높이 확보
+  // 실제 가시적인 뷰포트 높이를 사용하여 헤더를 제외한 보드 높이 계산
   const vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-  const vw = window.innerWidth;
+  const headerHeight = header.offsetHeight;
   
-  // 헤더 높이와 여유 공간(40px)을 뺀 가용 영역 계산
-  const availableWidth = Math.min(360, vw - 32);
-  const availableHeight = vh - header.offsetHeight - 40;
+  const availableWidth = Math.min(360, window.innerWidth - 32);
+  const availableHeight = vh - headerHeight - 40; // 40px은 하단 여유 공간
 
-  // 가로와 세로 중 좁은 쪽 기준으로 블록 크기 결정
   const blockW = Math.floor(availableWidth / COLS);
   const blockH = Math.floor(availableHeight / ROWS);
   
@@ -86,7 +85,7 @@ function resize() {
   canvas.height = BLOCK * ROWS;
 }
 
-// 뷰포트 변경 시 즉시 대응
+// 뷰포트 변경 및 로드 시 즉시 실행
 if (window.visualViewport) {
   window.visualViewport.addEventListener('resize', resize);
   window.visualViewport.addEventListener('scroll', resize);
