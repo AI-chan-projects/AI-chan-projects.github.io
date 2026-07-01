@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>TETORIS</title>
 <style>
   * { box-sizing: border-box; }
@@ -14,6 +14,7 @@
     touch-action: none; overflow: hidden;
     -webkit-user-select: none; user-select: none;
     overscroll-behavior: none;
+    padding-bottom: env(safe-area-inset-bottom);
   }
   header {
     display: flex; justify-content: space-between; align-items: center;
@@ -24,12 +25,12 @@
     background: none; border: 1px solid #444; color: #e9e9ee;
     border-radius: 6px; padding: 6px 10px; font-family: inherit; font-size: 12px;
   }
-  #board { border: 2px solid #333; background: #000; touch-action: none; }
+  #board { border: 2px solid #333; background: #000; touch-action: none; display: block; }
   #overlay {
     position: fixed; inset: 0; background: rgba(0,0,0,.9);
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     gap: 16px; text-align: center; padding: 20px;
-    word-break: keep-all;
+    word-break: keep-all; z-index: 10;
   }
   #overlay.hide { display: none; }
   #overlay button {
@@ -68,7 +69,8 @@ const ctx = canvas.getContext('2d');
 
 function resize() {
   const header = document.querySelector('header');
-  const vh = window.innerHeight || document.documentElement.clientHeight;
+  // 툴바 영향을 받지 않는 실제 시각적 높이 사용
+  const vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
   const availableWidth = Math.min(360, window.innerWidth - 32);
   const availableHeight = vh - header.offsetHeight - 40;
 
@@ -80,9 +82,13 @@ function resize() {
   canvas.height = BLOCK * ROWS;
 }
 
+// 뷰포트 변경 시 즉시 대응
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', resize);
+  window.visualViewport.addEventListener('scroll', resize);
+}
 window.addEventListener('resize', resize);
 window.addEventListener('load', resize);
-setTimeout(resize, 300);
 
 const COLORS = { I:'#00f0ff', O:'#fff000', T:'#c04cff', S:'#33ff77', Z:'#ff3333', J:'#3366ff', L:'#ff9933' };
 const SHAPES = {
