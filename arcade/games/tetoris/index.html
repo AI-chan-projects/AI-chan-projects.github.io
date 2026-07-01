@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>TETORIS</title>
 <style>
   * { box-sizing: border-box; }
@@ -10,7 +10,12 @@
     margin: 0; background: #0e0f13; color: #e9e9ee;
     font-family: ui-monospace, monospace;
     display: flex; flex-direction: column; align-items: center;
-    height: 100dvh; touch-action: none; overflow: hidden;
+    height: 100dvh; 
+    touch-action: none; 
+    overflow: hidden;
+    -webkit-user-select: none; 
+    user-select: none;
+    overscroll-behavior: none;
   }
   header {
     display: flex; justify-content: space-between; align-items: center;
@@ -198,15 +203,20 @@ window.addEventListener('keydown', (e) => {
   else if (e.key === 'ArrowUp') rotatePiece();
   else if (e.key === ' ') { e.preventDefault(); hardDrop(); }
 });
+
 let touchStartX = 0, touchStartY = 0, moved = false;
 const SWIPE_THRESHOLD = 24;
+
 canvas.addEventListener('touchstart', (e) => {
+  e.preventDefault(); 
   if (!running) return;
   const t = e.touches[0];
   touchStartX = t.clientX; touchStartY = t.clientY;
   moved = false;
-}, { passive: true });
+}, { passive: false });
+
 canvas.addEventListener('touchmove', (e) => {
+  e.preventDefault();
   if (!running) return;
   const t = e.touches[0];
   const dx = t.clientX - touchStartX;
@@ -221,8 +231,12 @@ canvas.addEventListener('touchmove', (e) => {
     touchStartY = t.clientY;
     moved = true;
   }
-}, { passive: true });
-canvas.addEventListener('touchend', () => { if (!moved && running) rotatePiece(); }, { passive: true });
+}, { passive: false });
+
+canvas.addEventListener('touchend', (e) => {
+  if (!moved && running) rotatePiece();
+}, { passive: false });
+
 const bgm = document.getElementById('bgm'), bgmBtn = document.getElementById('bgmBtn');
 let bgmOn = false;
 bgmBtn.addEventListener('click', () => {
