@@ -22,15 +22,6 @@
     border-radius:6px; padding:6px 10px; font-family:inherit; font-size:12px;
   }
   #board{ border:2px solid #333; background:#000; touch-action:none; }
-  .controls{
-    display:grid; grid-template-columns:repeat(4,64px); gap:8px;
-    margin-top:14px;
-  }
-  .controls button{
-    height:52px; border-radius:8px; border:1px solid #333;
-    background:#181920; color:#e9e9ee; font-size:18px;
-  }
-  .controls button:active{ background:#00f0ff33; }
   #overlay{
     position:fixed; inset:0; background:rgba(0,0,0,.85);
     display:flex; flex-direction:column; align-items:center; justify-content:center;
@@ -52,16 +43,9 @@
 
 <canvas id="board"></canvas>
 
-<div class="controls">
-  <button id="left">◀</button>
-  <button id="rotate">⟳</button>
-  <button id="right">▶</button>
-  <button id="down">▼</button>
-</div>
-
 <div id="overlay">
   <div style="font-size:22px;font-weight:bold;">TETORIS</div>
-  <div style="font-size:12px;color:#999;">방향키 또는 버튼으로 조작 · 스페이스바 하드드롭</div>
+  <div style="font-size:12px;color:#999;">화면 탭: 회전 · 아래로 스와이프: 하드드롭 · 좌우 스와이프: 이동</div>
   <button id="startBtn">START</button>
 </div>
 
@@ -238,11 +222,40 @@ window.addEventListener('keydown', (e) => {
   else if (e.key === ' ') { e.preventDefault(); hardDrop(); }
 });
 
-// 모바일 버튼 조작
-document.getElementById('left').addEventListener('click', () => running && move(-1));
-document.getElementById('right').addEventListener('click', () => running && move(1));
-document.getElementById('down').addEventListener('click', () => running && softDrop());
-document.getElementById('rotate').addEventListener('click', () => running && rotatePiece());
+// 터치 조작: 탭 = 회전, 좌우 스와이프 = 이동, 아래로 스와이프 = 하드드롭
+let touchStartX = 0, touchStartY = 0, touchStartTime = 0, moved = false;
+const SWIPE_THRESHOLD = 24;
+
+canvas.addEventListener('touchstart', (e) => {
+  if (!running) return;
+  const t = e.touches[0];
+  touchStartX = t.clientX; touchStartY = t.clientY;
+  touchStartTime = Date.now();
+  moved = false;
+}, { passive: true });
+
+canvas.addEventListener('touchmove', (e) => {
+  if (!running) return;
+  const t = e.touches[0];
+  const dx = t.clientX - touchStartX;
+  const dy = t.clientY - touchStartY;
+
+  if (Math.abs(dx) > SWIPE_THRESHOLD) {
+    move(dx > 0 ? 1 : -1);
+    touchStartX = t.clientX;
+    moved = true;
+  }
+  if (dy > SWIPE_THRESHOLD * 3) {
+    hardDrop();
+    touchStartY = t.clientY;
+    moved = true;
+  }
+}, { passive: true });
+
+canvas.addEventListener('touchend', () => {
+  if (!running) return;
+  if (!moved) rotatePiece(); // 스와이프 없이 짧게 탭한 경우 회전
+}, { passive: true });
 
 // 배경음악: 같은 폴더에 bgm.mp3 를 넣으면 재생됩니다. 없으면 버튼을 눌러도 무음입니다.
 const bgm = document.getElementById('bgm');
