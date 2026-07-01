@@ -6,31 +6,31 @@
 <title>TETORIS</title>
 <style>
   * { box-sizing: border-box; }
-  body{
-    margin:0; background:#0e0f13; color:#e9e9ee;
-    font-family:ui-monospace, monospace;
-    display:flex; flex-direction:column; align-items:center;
-    min-height:100vh; touch-action:none; overflow:hidden;
+  body {
+    margin: 0; background: #0e0f13; color: #e9e9ee;
+    font-family: ui-monospace, monospace;
+    display: flex; flex-direction: column; align-items: center;
+    height: 100dvh; touch-action: none; overflow: hidden;
   }
-  header{
-    display:flex; justify-content:space-between; align-items:center;
-    width:100%; max-width:360px; padding:12px 8px 4px;
+  header {
+    display: flex; justify-content: space-between; align-items: center;
+    width: 100%; max-width: 360px; padding: 12px 8px 4px;
   }
-  header .score{ font-size:14px; }
-  header button{
-    background:none; border:1px solid #444; color:#e9e9ee;
-    border-radius:6px; padding:6px 10px; font-family:inherit; font-size:12px;
+  header .score { font-size: 14px; }
+  header button {
+    background: none; border: 1px solid #444; color: #e9e9ee;
+    border-radius: 6px; padding: 6px 10px; font-family: inherit; font-size: 12px;
   }
-  #board{ border:2px solid #333; background:#000; touch-action:none; }
-  #overlay{
-    position:fixed; inset:0; background:rgba(0,0,0,.85);
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
-    gap:14px; text-align:center;
+  #board { border: 2px solid #333; background: #000; touch-action: none; }
+  #overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.85);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 14px; text-align: center;
   }
-  #overlay.hide{ display:none; }
-  #overlay button{
-    background:#00f0ff; color:#000; border:none; border-radius:6px;
-    padding:10px 24px; font-family:inherit; font-weight:bold; font-size:14px;
+  #overlay.hide { display: none; }
+  #overlay button {
+    background: #00f0ff; color: #000; border: none; border-radius: 6px;
+    padding: 10px 24px; font-family: inherit; font-weight: bold; font-size: 14px;
   }
 </style>
 </head>
@@ -49,7 +49,6 @@
   <button id="startBtn">START</button>
 </div>
 
-<!-- 배경음악: 같은 폴더에 bgm.mp3 파일을 넣으면 자동으로 재생됩니다 -->
 <audio id="bgm" src="bgm.mp3" loop></audio>
 <div style="position:fixed;bottom:6px;right:8px;font-size:10px;color:#555;">
   BGM: <a href="https://nico.ms/sm44301514?ref=thumb_watch" target="_blank" rel="noopener" style="color:#555;">nico.ms/sm44301514</a>
@@ -61,9 +60,15 @@ let BLOCK = 24;
 const canvas = document.getElementById('board');
 const ctx = canvas.getContext('2d');
 
-function resize(){
-  const maxW = Math.min(360, window.innerWidth - 16);
-  BLOCK = Math.floor(maxW / COLS);
+function resize() {
+  const header = document.querySelector('header');
+  const availableWidth = window.innerWidth - 16;
+  const availableHeight = (window.innerHeight || document.documentElement.clientHeight) - header.offsetHeight - 20;
+
+  const blockW = Math.floor(availableWidth / COLS);
+  const blockH = Math.floor(availableHeight / ROWS);
+  
+  BLOCK = Math.min(blockW, blockH);
   canvas.width = BLOCK * COLS;
   canvas.height = BLOCK * ROWS;
 }
@@ -72,37 +77,25 @@ window.addEventListener('resize', resize);
 
 const COLORS = { I:'#00f0ff', O:'#fff000', T:'#c04cff', S:'#33ff77', Z:'#ff3333', J:'#3366ff', L:'#ff9933' };
 const SHAPES = {
-  I: [[1,1,1,1]],
-  O: [[1,1],[1,1]],
-  T: [[0,1,0],[1,1,1]],
-  S: [[0,1,1],[1,1,0]],
-  Z: [[1,1,0],[0,1,1]],
-  J: [[1,0,0],[1,1,1]],
-  L: [[0,0,1],[1,1,1]]
+  I: [[1,1,1,1]], O: [[1,1],[1,1]], T: [[0,1,0],[1,1,1]],
+  S: [[0,1,1],[1,1,0]], Z: [[1,1,0],[0,1,1]], J: [[1,0,0],[1,1,1]], L: [[0,0,1],[1,1,1]]
 };
 const KEYS = Object.keys(SHAPES);
 
 let grid, current, score, gameOver, dropCounter, dropInterval, lastTime, running;
 
-function newGrid(){
-  return Array.from({length: ROWS}, () => Array(COLS).fill(null));
-}
-
+function newGrid(){ return Array.from({length: ROWS}, () => Array(COLS).fill(null)); }
 function randomPiece(){
   const k = KEYS[Math.floor(Math.random() * KEYS.length)];
   const shape = SHAPES[k].map(r => r.slice());
   return { shape, color: COLORS[k], x: Math.floor(COLS/2) - Math.ceil(shape[0].length/2), y: 0 };
 }
-
 function rotate(shape){
   const rows = shape.length, cols = shape[0].length;
   const res = Array.from({length: cols}, () => Array(rows).fill(0));
-  for (let y = 0; y < rows; y++)
-    for (let x = 0; x < cols; x++)
-      res[x][rows - 1 - y] = shape[y][x];
+  for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) res[x][rows - 1 - y] = shape[y][x];
   return res;
 }
-
 function collide(shape, ox, oy){
   for (let y = 0; y < shape.length; y++){
     for (let x = 0; x < shape[y].length; x++){
@@ -114,14 +107,12 @@ function collide(shape, ox, oy){
   }
   return false;
 }
-
 function merge(){
   const { shape, color, x, y } = current;
   for (let sy = 0; sy < shape.length; sy++)
     for (let sx = 0; sx < shape[sy].length; sx++)
       if (shape[sy][sx] && y + sy >= 0) grid[y + sy][x + sx] = color;
 }
-
 function clearLines(){
   let cleared = 0;
   outer: for (let y = ROWS - 1; y >= 0; y--){
@@ -135,7 +126,6 @@ function clearLines(){
     document.getElementById('score').textContent = score;
   }
 }
-
 function spawn(){
   current = randomPiece();
   if (collide(current.shape, current.x, current.y)){
@@ -143,10 +133,7 @@ function spawn(){
     showOverlay('GAME OVER', `SCORE: ${score}`);
   }
 }
-
-function move(dx){
-  if (!collide(current.shape, current.x + dx, current.y)) current.x += dx;
-}
+function move(dx){ if (!collide(current.shape, current.x + dx, current.y)) current.x += dx; }
 function softDrop(){
   if (!collide(current.shape, current.x, current.y + 1)){ current.y++; }
   else { merge(); clearLines(); spawn(); }
@@ -161,26 +148,21 @@ function rotatePiece(){
   else if (!collide(rotated, current.x - 1, current.y)) { current.x--; current.shape = rotated; }
   else if (!collide(rotated, current.x + 1, current.y)) { current.x++; current.shape = rotated; }
 }
-
 function draw(){
   ctx.fillStyle = '#000';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
-
   for (let y = 0; y < ROWS; y++)
     for (let x = 0; x < COLS; x++)
       if (grid[y][x]) drawCell(x, y, grid[y][x]);
-
   const { shape, color, x, y } = current;
   for (let sy = 0; sy < shape.length; sy++)
     for (let sx = 0; sx < shape[sy].length; sx++)
       if (shape[sy][sx] && y + sy >= 0) drawCell(x + sx, y + sy, color);
 }
-
 function drawCell(x, y, color){
   ctx.fillStyle = color;
   ctx.fillRect(x * BLOCK, y * BLOCK, BLOCK - 1, BLOCK - 1);
 }
-
 function update(time = 0){
   if (!running) return;
   const delta = time - lastTime;
@@ -190,7 +172,6 @@ function update(time = 0){
   draw();
   requestAnimationFrame(update);
 }
-
 function showOverlay(title, sub){
   const ov = document.getElementById('overlay');
   ov.innerHTML = `<div style="font-size:22px;font-weight:bold;">${title}</div>
@@ -199,7 +180,6 @@ function showOverlay(title, sub){
   ov.classList.remove('hide');
   document.getElementById('startBtn').addEventListener('click', startGame);
 }
-
 function startGame(){
   grid = newGrid();
   score = 0; gameOver = false; running = true;
@@ -209,10 +189,7 @@ function startGame(){
   document.getElementById('overlay').classList.add('hide');
   requestAnimationFrame(update);
 }
-
 document.getElementById('startBtn').addEventListener('click', startGame);
-
-// 키보드 조작
 window.addEventListener('keydown', (e) => {
   if (!running) return;
   if (e.key === 'ArrowLeft') move(-1);
@@ -221,25 +198,19 @@ window.addEventListener('keydown', (e) => {
   else if (e.key === 'ArrowUp') rotatePiece();
   else if (e.key === ' ') { e.preventDefault(); hardDrop(); }
 });
-
-// 터치 조작: 탭 = 회전, 좌우 스와이프 = 이동, 아래로 스와이프 = 하드드롭
-let touchStartX = 0, touchStartY = 0, touchStartTime = 0, moved = false;
+let touchStartX = 0, touchStartY = 0, moved = false;
 const SWIPE_THRESHOLD = 24;
-
 canvas.addEventListener('touchstart', (e) => {
   if (!running) return;
   const t = e.touches[0];
   touchStartX = t.clientX; touchStartY = t.clientY;
-  touchStartTime = Date.now();
   moved = false;
 }, { passive: true });
-
 canvas.addEventListener('touchmove', (e) => {
   if (!running) return;
   const t = e.touches[0];
   const dx = t.clientX - touchStartX;
   const dy = t.clientY - touchStartY;
-
   if (Math.abs(dx) > SWIPE_THRESHOLD) {
     move(dx > 0 ? 1 : -1);
     touchStartX = t.clientX;
@@ -251,27 +222,14 @@ canvas.addEventListener('touchmove', (e) => {
     moved = true;
   }
 }, { passive: true });
-
-canvas.addEventListener('touchend', () => {
-  if (!running) return;
-  if (!moved) rotatePiece(); // 스와이프 없이 짧게 탭한 경우 회전
-}, { passive: true });
-
-// 배경음악: 같은 폴더에 bgm.mp3 를 넣으면 재생됩니다. 없으면 버튼을 눌러도 무음입니다.
-const bgm = document.getElementById('bgm');
-const bgmBtn = document.getElementById('bgmBtn');
+canvas.addEventListener('touchend', () => { if (!moved && running) rotatePiece(); }, { passive: true });
+const bgm = document.getElementById('bgm'), bgmBtn = document.getElementById('bgmBtn');
 let bgmOn = false;
 bgmBtn.addEventListener('click', () => {
   bgmOn = !bgmOn;
-  if (bgmOn){
-    bgm.play().catch(() => {});
-    bgmBtn.textContent = '🔊 BGM';
-  } else {
-    bgm.pause();
-    bgmBtn.textContent = '🔇 BGM';
-  }
+  if (bgmOn){ bgm.play().catch(() => {}); bgmBtn.textContent = '🔊 BGM'; }
+  else { bgm.pause(); bgmBtn.textContent = '🔇 BGM'; }
 });
 </script>
-
 </body>
 </html>
